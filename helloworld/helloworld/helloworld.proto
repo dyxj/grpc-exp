@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+// protoc -I ./ helloworld.proto --go_out=plugins=grpc:./
+package helloworld;
+
+// HelloWorldService definition
+service HelloWorldService {
+    // Says Hello World
+    rpc SayHello (HelloRequest) returns (HelloResponse) {}
+    // Says Bye World
+    rpc SayBye (HelloRequest) returns (HelloResponse) {}
+}
+
+// Request message containing user's name
+message HelloRequest {
+    string name = 1;
+}
+
+// Response message containing response messgae
+message HelloResponse {
+    string message = 1;
+}
