@@ -26,11 +26,15 @@ func main() {
 	defer conn.Close()
 	// New client service
 	c := hw.NewHelloWorldServiceClient(conn)
+
+	// Calls hello service
 	r, err := c.SayHello(context.Background(), &hw.HelloRequest{Name: clientName})
 	if err != nil {
 		log.Printf("could not say hello: %v", err)
 	}
 	log.Printf("%s", r.Message)
+
+	// Calls Bye service
 	r, err = c.SayBye(context.Background(), &hw.HelloRequest{Name: clientName})
 	if err != nil {
 		log.Printf("could not say hello: %v", err)
