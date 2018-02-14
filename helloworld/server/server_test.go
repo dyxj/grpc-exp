@@ -46,7 +46,6 @@ func TestSayBye(t *testing.T) {
 		name   string
 		expect string
 	}{
-
 		{
 			name:   "Doodie",
 			expect: "Bye World!! Doodie",

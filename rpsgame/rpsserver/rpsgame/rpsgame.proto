@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+// protoc -I ./ rpsgame.proto --go_out=plugins=grpc:./
+package rpsgame;
+
+// Middle Me service.
+service RpsGameSvc {
+    rpc Game(stream Req) returns (stream Resp) {}
+}
+
+// MmReq message
+message Req {
+    message Player {
+        string id = 1;
+    }
+
+    oneof event {
+        Player join = 1;
+        Sign mysign = 2;
+    }
+}
+
+// MmResp message
+message Resp {
+    enum State {
+        BEGIN = 0;
+        START_TURN = 1;
+        STOP_TURN = 2;
+        WIN = 3;
+        LOSE = 4;
+        DRAW = 5;
+        OWIN = 6;
+        OLOSE = 7;
+    }
+
+    oneof event {
+        State gstate = 1;
+        Sign sign = 2;        
+    }
+}
+
+enum Sign {
+    ROCK = 0;
+    PAPER = 1;
+    SCISSORS = 2;
+}
