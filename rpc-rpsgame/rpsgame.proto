@@ -1,14 +1,14 @@
 syntax = "proto3";
 
-// protoc -I ./ rpsgame.proto --go_out=plugins=grpc:./
+// protoc -I ./ rpsgame.proto --go_out=plugins=grpc:./rpsserver/rpsgame/
 package rpsgame;
 
-// Middle Me service.
-service RpsGameSvc {
+// RockPaperScissors service.
+service RpsSvc {
     rpc Game(stream Req) returns (stream Resp) {}
 }
 
-// MmReq message
+// Request message
 message Req {
     message Player {
         string id = 1;
@@ -20,12 +20,12 @@ message Req {
     }
 }
 
-// MmResp message
+// Response message
 message Resp {
     enum State {
         BEGIN = 0;
         START_TURN = 1;
-        STOP_TURN = 2;
+        WAIT_TURN = 2;
         WIN = 3;
         LOSE = 4;
         DRAW = 5;
