@@ -94,6 +94,13 @@ func main() {
 			}
 			evt := resp.GetEvent()
 			logrus.Info(evt)
+
+			resp, err = gclient.Recv()
+			if err != nil {
+				logrus.Errorf("error receiving: %v", err)
+			}
+			evt = resp.GetEvent()
+			logrus.Info(evt)
 		}
 	}
 
