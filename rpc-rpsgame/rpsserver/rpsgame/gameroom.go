@@ -14,38 +14,42 @@ type gameroomslice struct {
 	slRooms []*gameroom
 }
 
-type player struct {
-	ID     string
-	Stream *rpsSvcGameServer
-}
-
 type gameroom struct {
 	RoomID  string
-	Player1 *player
-	Player2 *player
+	Player1 *rpsSvcGameServer
+	Player2 *rpsSvcGameServer
+	IsFull  chan bool
 }
 
-// GetRoom : thread safe version for getRoom
-func (grs *gameroomslice) GetRoom() *gameroom {
+// JoinRoom : thread safe version for getRoom
+func (grs *gameroomslice) JoinRoom(stream *rpsSvcGameServer) *gameroom {
 	grs.Lock()
 	defer grs.Unlock()
-	return grs.getRoom()
+	return grs.joinRoom(stream)
 }
 
-// getRoom : returns a gameroom from stack or creates one if there aren't any.
-func (grs *gameroomslice) getRoom() *gameroom {
+// joinRoom : returns a gameroom from stack or creates one if there aren't any.
+func (grs *gameroomslice) joinRoom(stream *rpsSvcGameServer) *gameroom {
 	var g *gameroom
 	grsLen := len(grs.slRooms)
 	if grsLen < 1 {
 		// no rooms in slice
 		// create and add to slice
-		g = &gameroom{}
+		g = &gameroom{Player1: stream, IsFull: make(chan bool)}
 		grs.slRooms = append(grs.slRooms, g)
 	} else {
-		// get first in
-		// check if room has 2 both players
-		// remove from slice
-		g, grs.slRooms = grs.slRooms[0], grs.slRooms[1:]
+		// get first
+		g = grs.slRooms[0]
+		// populate rooms
+		if g.Player1 == nil {
+			g.Player1 = stream
+			return g
+		} else if g.Player2 == nil {
+			g.Player2 = stream
+			// room is full remove from list
+			close(g.IsFull)
+			grs.slRooms = grs.slRooms[1:]
+		}
 	}
 	return g
 }

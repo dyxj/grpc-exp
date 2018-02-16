@@ -65,18 +65,11 @@ func main() {
 	evt := resp.GetEvent()
 	logrus.Info(evt)
 
-	ctx := gclient.Context()
-	fmt.Println(ctx)
+	// ctx := gclient.Context()
+	// fmt.Println(ctx)
 	// Add on this part later
 	cont := true
 	if cont {
-		resp, err := gclient.Recv()
-		if err != nil {
-			logrus.Errorf("error receiving: %v", err)
-		}
-		evt := resp.GetEvent()
-		logrus.Info(evt)
-
 		// Handle user input
 		reader := bufio.NewReader(os.Stdin)
 		for {
@@ -94,6 +87,13 @@ func main() {
 				sendSign(gclient, rpsgame.Sign_PAPER)
 				fmt.Println(text)
 			}
+
+			resp, err := gclient.Recv()
+			if err != nil {
+				logrus.Errorf("error receiving: %v", err)
+			}
+			evt := resp.GetEvent()
+			logrus.Info(evt)
 		}
 	}
 
