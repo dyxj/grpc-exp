@@ -24,13 +24,13 @@ message Req {
 message Resp {
     enum State {
         BEGIN = 0;
-        START_TURN = 1;
-        WAIT_TURN = 2;
-        WIN = 3;
-        LOSE = 4;
-        DRAW = 5;
-        OWIN = 6;
-        OLOSE = 7;
+        ENTER_INPUT = 1;
+        WIN = 2;
+        LOSE = 3;
+        DRAW = 4;
+        OWIN = 5;
+        OLOSE = 6;
+        ERROR_REPEAT = 7;
     }
 
     oneof event {

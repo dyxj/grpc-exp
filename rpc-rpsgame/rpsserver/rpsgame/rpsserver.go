@@ -27,6 +27,7 @@ func (r *RpsSvc) Game(stream RpsSvc_GameServer) error {
 	if err != nil {
 		return err
 	}
+	// Can get player id, will use it later
 	player := req.GetJoin()
 	// Ensure player is not nil
 	if player == nil {
@@ -38,48 +39,19 @@ func (r *RpsSvc) Game(stream RpsSvc_GameServer) error {
 	// Assign room
 	streamcast := stream.(*rpsSvcGameServer)
 	groom := r.rooms.JoinRoom(streamcast)
-	var isPlayer1 bool
-	if groom.Player2 == nil {
-		isPlayer1 = true
-	}
 
 	// Wait for room to be full
 	<-groom.IsFull
-
-	// Send Begin
-	revent := &Resp_Gstate{Gstate: Resp_BEGIN}
-	resp := &Resp{Event: revent}
-	stream.Send(resp)
-
-	var stream2 RpsSvc_GameServer
-	if isPlayer1 {
-		stream2 = groom.Player2
-	} else {
-		stream2 = groom.Player1
+	if groom.Player2 == streamcast {
+		logrus.Info("This is player two")
+		groom.gameRoomMechanics()
+		close(groom.IsEnd)
 	}
+	<-groom.IsEnd
 
-	reqNo := 1
-	for {
-		reqNo++
-		logrus.Infof("Get Request %v", reqNo)
-		req, err = getRequest(stream)
-		if err != nil {
-			return err
-		}
-		logrus.Infof("Request %v by %v", reqNo, player)
-
-		sign := &Resp_Sign{Sign: req.GetMysign()}
-		resp := &Resp{Event: sign}
-		err = stream.Send(resp)
-		if err != nil {
-			logrus.Error(err)
-		}
-		// not sending as intended. try using channels instead
-		err = stream2.Send(resp)
-		if err != nil {
-			logrus.Error(err)
-		}
-	}
+	// Game Mechanics
+	logrus.Info("Game End")
+	return nil
 }
 
 func getRequest(stream RpsSvc_GameServer) (*Req, error) {
@@ -101,4 +73,16 @@ func sendResponse(stream RpsSvc_GameServer, r *Resp) error {
 	}
 
 	return err
+}
+
+func sendSign(stream RpsSvc_GameServer, sign Sign) error {
+	rsign := &Resp_Sign{Sign: sign}
+	resp := &Resp{Event: rsign}
+	return sendResponse(stream, resp)
+}
+
+func sendState(stream RpsSvc_GameServer, state Resp_State) error {
+	rstate := &Resp_Gstate{Gstate: state}
+	resp := &Resp{Event: rstate}
+	return sendResponse(stream, resp)
 }
