@@ -45,7 +45,6 @@ func (r *RpsSvc) Game(stream RpsSvc_GameServer) error {
 	if groom.Player2 == streamcast {
 		logrus.Info("This is player two")
 		groom.gameRoomMechanics()
-		close(groom.IsEnd)
 	}
 	<-groom.IsEnd
 

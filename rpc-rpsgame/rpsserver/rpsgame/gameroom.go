@@ -1,6 +1,7 @@
 package rpsgame
 
 import (
+	"context"
 	"sync"
 
 	"github.com/sirupsen/logrus"
@@ -48,6 +49,7 @@ func (grs *gameroomslice) joinRoom(stream *rpsSvcGameServer) *gameroom {
 		// create and add to slice
 		g = &gameroom{Player1: stream,
 			IsFull:    make(chan bool),
+			IsEnd:     make(chan bool),
 			ScoreList: []int{0, 0},
 		}
 		grs.slRooms = append(grs.slRooms, g)
@@ -69,20 +71,34 @@ func (grs *gameroomslice) joinRoom(stream *rpsSvcGameServer) *gameroom {
 }
 
 func (gr *gameroom) gameRoomMechanics() {
-	revent := &Resp_Gstate{Gstate: Resp_BEGIN}
-	resp := &Resp{Event: revent}
+	rbegin := &Resp_Gstate{Gstate: Resp_BEGIN}
+	resp := &Resp{Event: rbegin}
 	gr.Player1.Send(resp)
 	gr.Player2.Send(resp)
-	p1SChan := make(chan Sign)
-	p2SChan := make(chan Sign)
 	// Channels to receive request
 	// Get input from player 1 and 2
 	for gr.ScoreList[0] < winningScore &&
 		gr.ScoreList[1] < winningScore {
+		// If context is canceled
+		if gr.Player1.Context().Err() == context.Canceled ||
+			gr.Player2.Context().Err() == context.Canceled {
+			break
+		}
+		logrus.Infof("P1: %v\t\tP2: %v",
+			gr.ScoreList[0], gr.ScoreList[1])
+		// Send Get Input
+		sendState(gr.Player1, Resp_ENTER_INPUT)
+		sendState(gr.Player2, Resp_ENTER_INPUT)
+
+		// Channel to receive signs
+		p1SChan := make(chan Sign)
+		p2SChan := make(chan Sign)
 		go getPlayerSign(gr.Player1, p1SChan)
 		go getPlayerSign(gr.Player2, p2SChan)
 		p1Sign := <-p1SChan
 		p2Sign := <-p2SChan
+
+		// Process signs
 		result := signLogic(p1Sign, p2Sign)
 		if result == 1 {
 			// player 1 win
@@ -113,7 +129,6 @@ func (gr *gameroom) gameRoomMechanics() {
 }
 
 func getPlayerSign(stream RpsSvc_GameServer, cSign chan Sign) {
-
 	req, err := getRequest(stream)
 	if err != nil {
 		logrus.Errorf("Error at getPlayerSign(): %v, retry get player sign", err)
@@ -128,16 +143,19 @@ func getPlayerSign(stream RpsSvc_GameServer, cSign chan Sign) {
 		if err == nil {
 			logrus.Errorf("Error at getPlayerSign() second trial: %v, defaulting to rock", err)
 			cSign <- Sign_ROCK
+			close(cSign)
 			return
 		}
 	}
 
 	if sign, ok := req.GetEvent().(*Req_Mysign); ok {
 		cSign <- sign.Mysign
+		close(cSign)
 		return
 	}
 	logrus.Errorf("Not a valid sign, defaulting to rock")
 	cSign <- Sign_ROCK
+	close(cSign)
 }
 
 // 0 = draw
