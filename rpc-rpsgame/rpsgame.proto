@@ -31,6 +31,7 @@ message Resp {
         OWIN = 5;
         OLOSE = 6;
         ERROR_REPEAT = 7;
+        OPPLEFT = 8;
     }
 
     oneof event {

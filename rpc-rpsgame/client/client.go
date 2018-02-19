@@ -52,6 +52,7 @@ func main() {
 	fmt.Print("Enter player id: ")
 	reader := bufio.NewReader(os.Stdin)
 	playerid, err := reader.ReadString('\n')
+	playerid = strings.Trim(playerid, "\n")
 	if err != nil {
 		logrus.Fatal("Error getting player id")
 	}
@@ -108,6 +109,7 @@ func main() {
 			fmt.Print("Rock(1), Paper(2), Scissors(3), Quit(q)\nEnter input: ")
 			text, err := reader.ReadString('\n')
 			if err != nil {
+				fmt.Println("Error getting input, try again...")
 				logrus.Error("Error getting input")
 				continue
 			}
@@ -153,6 +155,9 @@ func main() {
 			break
 		} else if gameState == rpsgame.Resp_ERROR_REPEAT {
 			fmt.Println("An error occured, repeat game state")
+			continue
+		} else if gameState == rpsgame.Resp_OPPLEFT {
+			fmt.Println("Random Dude Left :(")
 			continue
 		}
 		// Handle game states end

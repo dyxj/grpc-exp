@@ -15,7 +15,6 @@ func TestSayHello(t *testing.T) {
 		name   string
 		expect string
 	}{
-
 		{
 			name:   "Doodie",
 			expect: "Hello World!! Doodie",

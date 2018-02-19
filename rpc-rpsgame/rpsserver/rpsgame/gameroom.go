@@ -57,7 +57,8 @@ func (grs *gameroomslice) joinRoom(stream *rpsSvcGameServer) *gameroom {
 		// get first
 		g = grs.slRooms[0]
 		// populate rooms
-		if g.Player1 == nil {
+		if g.Player1 == nil ||
+			g.Player1.Context().Err() == context.Canceled {
 			g.Player1 = stream
 			return g
 		} else if g.Player2 == nil {
@@ -84,8 +85,8 @@ func (gr *gameroom) gameRoomMechanics() {
 			gr.Player2.Context().Err() == context.Canceled {
 			break
 		}
-		logrus.Infof("P1: %v\t\tP2: %v",
-			gr.ScoreList[0], gr.ScoreList[1])
+		// logrus.Infof("P1: %v\t\tP2: %v",
+		// 	gr.ScoreList[0], gr.ScoreList[1])
 		// Send Get Input
 		sendState(gr.Player1, Resp_ENTER_INPUT)
 		sendState(gr.Player2, Resp_ENTER_INPUT)
@@ -118,10 +119,22 @@ func (gr *gameroom) gameRoomMechanics() {
 	}
 
 	// Send Overall Win/Lose
-	if gr.ScoreList[0] >= winningScore {
+	if gr.Player1.Context().Err() == context.Canceled {
+		// Player2 Wins
+		sendState(gr.Player2, Resp_OPPLEFT)
+		matchResults(gr.Player1, false)
+		matchResults(gr.Player2, true)
+	} else if gr.Player2.Context().Err() == context.Canceled {
+		// Player1 Wins
+		sendState(gr.Player1, Resp_OPPLEFT)
+		matchResults(gr.Player1, true)
+		matchResults(gr.Player2, false)
+	} else if gr.ScoreList[0] >= winningScore {
+		// Player1 Wins
 		matchResults(gr.Player1, true)
 		matchResults(gr.Player2, false)
 	} else {
+		// Player2 Wins
 		matchResults(gr.Player1, false)
 		matchResults(gr.Player2, true)
 	}
@@ -131,17 +144,17 @@ func (gr *gameroom) gameRoomMechanics() {
 func getPlayerSign(stream RpsSvc_GameServer, cSign chan Sign) {
 	req, err := getRequest(stream)
 	if err != nil {
-		logrus.Errorf("Error at getPlayerSign(): %v, retry get player sign", err)
+		// logrus.Errorf("Error at getPlayerSign(): %v, retry get player sign", err)
 		state := &Resp_Gstate{Gstate: Resp_ERROR_REPEAT}
 		resp := &Resp{Event: state}
 		err = stream.Send(resp)
 		if err != nil {
-			logrus.Errorf("Fail to send error repeat at getPlayerSign(): %v, ending context", err)
+			// logrus.Errorf("Fail to send error repeat at getPlayerSign(): %v, ending context", err)
 			stream.Context().Done()
 		}
 		req, err = getRequest(stream)
 		if err == nil {
-			logrus.Errorf("Error at getPlayerSign() second trial: %v, defaulting to rock", err)
+			// logrus.Errorf("Error at getPlayerSign() second trial: %v, defaulting to rock", err)
 			cSign <- Sign_ROCK
 			close(cSign)
 			return
