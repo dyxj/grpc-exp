@@ -141,6 +141,7 @@ func (gr *gameroom) gameRoomMechanics() {
 	close(gr.IsEnd)
 }
 
+// getPlayerSign : receive player sign
 func getPlayerSign(stream RpsSvc_GameServer, cSign chan Sign) {
 	req, err := getRequest(stream)
 	if err != nil {
@@ -152,9 +153,16 @@ func getPlayerSign(stream RpsSvc_GameServer, cSign chan Sign) {
 			// logrus.Errorf("Fail to send error repeat at getPlayerSign(): %v, ending context", err)
 			stream.Context().Done()
 		}
+		state = &Resp_Gstate{Gstate: Resp_ENTER_INPUT}
+		resp = &Resp{Event: state}
+		err = stream.Send(resp)
+		if err != nil {
+			// logrus.Errorf("Fail to send error repeat at getPlayerSign(): %v, ending context", err)
+			stream.Context().Done()
+		}
 		req, err = getRequest(stream)
 		if err == nil {
-			// logrus.Errorf("Error at getPlayerSign() second trial: %v, defaulting to rock", err)
+			logrus.Errorf("Error at getPlayerSign() second trial: %v, defaulting to rock", err)
 			cSign <- Sign_ROCK
 			close(cSign)
 			return
@@ -171,10 +179,11 @@ func getPlayerSign(stream RpsSvc_GameServer, cSign chan Sign) {
 	close(cSign)
 }
 
+// signLogic : returns winner in form of int, given 2 signs p1 and p2
 // 0 = draw
 // 1 = p1
 // 2 = p2
-// if invalid sign
+// if invalid sign, return draw if both invalid, win/lose if only 1 is invalid
 func signLogic(p1, p2 Sign) int {
 	if p1 == Sign_PAPER {
 		if p2 == Sign_ROCK {
@@ -214,9 +223,12 @@ func signLogic(p1, p2 Sign) int {
 	return 1
 }
 
-// 0 win
-// 1 lose
-// 2 draw
+// roundResults : send state to client, followed by opponents sign
+// input, stream - player respective RpsSvc_GameServer
+// input, oppSign - opponents sign
+// input, wld - 0 win
+// 				1 lose
+//			 	2 draw
 func roundResults(stream RpsSvc_GameServer, oppSign Sign,
 	wld int) {
 	if wld == 0 {
@@ -229,6 +241,7 @@ func roundResults(stream RpsSvc_GameServer, oppSign Sign,
 	sendSign(stream, oppSign)
 }
 
+// matchResults : send overall win/lose state to client
 func matchResults(stream RpsSvc_GameServer, win bool) {
 	if win {
 		sendState(stream, Resp_OWIN)

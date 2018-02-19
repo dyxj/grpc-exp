@@ -40,7 +40,7 @@ func (r *RpsSvc) Game(stream RpsSvc_GameServer) error {
 	streamcast := stream.(*rpsSvcGameServer)
 	groom := r.rooms.JoinRoom(streamcast)
 
-	// Wait for room to be full
+	// Wait for room to be full or
 	select {
 	case <-groom.IsFull:
 		logrus.Info("Game room is full, proceed to next state")
@@ -48,10 +48,12 @@ func (r *RpsSvc) Game(stream RpsSvc_GameServer) error {
 		logrus.Info("Context canceled")
 		return nil
 	}
+	// Initiazlie game mechanics
 	if groom.Player2 == streamcast {
 		logrus.Info("This is player two")
 		groom.gameRoomMechanics()
 	}
+	// Block until game end, mainly for player 1
 	<-groom.IsEnd
 
 	// Game Mechanics

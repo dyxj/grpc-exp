@@ -86,6 +86,7 @@ func main() {
 	fmt.Println("Game start")
 	fmt.Println("You can quit any time by pressing ctrl+c")
 	gameState := state.Gstate
+	var lastgameState rpsgame.Resp_State
 	lastMySign := rpsgame.Sign_ROCK
 	ScoreList := []int{0, 0}
 
@@ -156,7 +157,7 @@ func main() {
 			break
 		} else if gameState == rpsgame.Resp_ERROR_REPEAT {
 			fmt.Println("An error occured, repeat game state")
-			goto StateLoop
+			continue
 		} else if gameState == rpsgame.Resp_OPPLEFT {
 			fmt.Println("Random Dude Left :(")
 			continue
@@ -168,12 +169,14 @@ func main() {
 	fmt.Println("Game closing")
 }
 
+// sendSign : send signs to server
 func sendSign(stream rpsgame.RpsSvc_GameClient, sign rpsgame.Sign) error {
 	rsign := &rpsgame.Req_Mysign{Mysign: sign}
 	rq := &rpsgame.Req{Event: rsign}
 	return sendRequest(stream, rq)
 }
 
+// sendRequest : send request to server
 func sendRequest(stream rpsgame.RpsSvc_GameClient, req *rpsgame.Req) error {
 	logrus.Infof("sendRequest(), Sending response: %v", req)
 	err := stream.Send(req)
@@ -183,6 +186,7 @@ func sendRequest(stream rpsgame.RpsSvc_GameClient, req *rpsgame.Req) error {
 	return err
 }
 
+// getEvent : receive request from server. Is blocking
 func getEvent(gclient rpsgame.RpsSvc_GameClient) interface{} {
 	resp, err := gclient.Recv()
 	if err != nil {
