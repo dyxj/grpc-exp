@@ -103,6 +103,7 @@ func main() {
 			gameState = evtState.Gstate
 		}
 
+	StateLoop:
 		// Handle game states
 		if gameState == rpsgame.Resp_ENTER_INPUT {
 			// Input
@@ -111,7 +112,7 @@ func main() {
 			if err != nil {
 				fmt.Println("Error getting input, try again...")
 				logrus.Error("Error getting input")
-				continue
+				goto StateLoop
 			}
 			switch strings.Trim(text, "\n") {
 			case "q", "quit", "exit":
@@ -129,7 +130,7 @@ func main() {
 				lastMySign = rpsgame.Sign_SCISSORS
 			default:
 				fmt.Println("Invalid input!")
-				continue
+				goto StateLoop
 			}
 			fmt.Println("Waiting for the dude")
 		} else if gameState == rpsgame.Resp_WIN {
@@ -155,7 +156,7 @@ func main() {
 			break
 		} else if gameState == rpsgame.Resp_ERROR_REPEAT {
 			fmt.Println("An error occured, repeat game state")
-			continue
+			goto StateLoop
 		} else if gameState == rpsgame.Resp_OPPLEFT {
 			fmt.Println("Random Dude Left :(")
 			continue
