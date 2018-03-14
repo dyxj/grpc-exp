@@ -40,7 +40,7 @@ func (r *RpsSvc) Game(stream RpsSvc_GameServer) error {
 	streamcast := stream.(*rpsSvcGameServer)
 	groom := r.rooms.JoinRoom(streamcast)
 
-	// Wait for room to be full or
+	// Wait for room to be full or context to be canceled
 	select {
 	case <-groom.IsFull:
 		logrus.Info("Game room is full, proceed to next state")
