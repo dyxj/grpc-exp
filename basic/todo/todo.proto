@@ -1,0 +1,14 @@
+// protoc --go_out=. todo.proto
+syntax="proto3";
+
+package todo;
+
+message Task {
+    string text = 1;
+    // desc string = 3;
+    bool done= 2;
+}
+
+message TaskList {
+    repeated Task tlist = 1;
+}
